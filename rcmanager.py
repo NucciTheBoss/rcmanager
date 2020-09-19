@@ -1,12 +1,15 @@
 import click
 import os
 import sqlite3
+from tabulate import tabulate
+
+# Global variables
+home_env_var = os.getenv('HOME')
 
 
 # Check for the rcmanager database. If not available then create
 # a new database to be used by rcmanager
 def checkdatabase():
-    home_env_var = os.getenv('HOME')
     if os.path.exists("{}/.local/rcmanager/data/rcmanager.db".format(home_env_var)):
         return
 
@@ -175,8 +178,12 @@ class RCfile:
             print("{}: Over 100 characters. Please shorten the note".format(new_note))
             exit()
 
+    def totable(self, rcfile_path):
+        table = [["Name:", self.name], ["Shell:", self.shell],
+                 ["Rc File:", rcfile_path], ["Note:", self.note]]
+        print(tabulate(table, tablefmt="rst"))
 
-# TODO: Write upload method
+
 # TODO: Write remove method
 # TODO: Write update method
 # TODO: Write reset method
@@ -205,6 +212,7 @@ def upload(name, shell, rcfile, note, yml_file, yes):
     checkdatabase()
     # Begin the upload process
     if yml_file is not None:
+        # TODO: Write method to parse YAML file
         pass
 
     else:
@@ -225,7 +233,59 @@ def upload(name, shell, rcfile, note, yml_file, yes):
             if note is None:
                 note = "null"
 
-        # TODO: Finish writing the upload part
+            # Initialize rcfile
+            upload_file = RCfile(name, shell, rcfile, note)
+
+            # If yes, skip straight to uploading to the database
+            if yes:
+                conn = sqlite3.connect("{}/.local/rcmanager/data/rcmanager.db".format(home_env_var))
+                cursor = conn.cursor()
+                try:
+                    cursor.execute("INSERT INTO rcfile (name, shell, content, note)\n"
+                                   "VALUES (?,?,?,?)", (upload_file.getname(), upload_file.getshell(),
+                                                        upload_file.getcontent(), upload_file.getnote()))
+                    conn.commit()
+
+                except sqlite3.Error as e:
+                    fout = open("{}/.local/rcmanager/logs/upload.err.log".format(home_env_var), "wt")
+                    print(e, file=fout)
+                    fout.close()
+                    print("An error occurred! Please check log file in \n"
+                          "~/.local/rcmanager/logs")
+                    exit()
+
+                finally:
+                    conn.close()
+
+            else:
+                upload_file.totable(rcfile)
+                prompt = input("Add the above to the database? (y/n): ").lower()
+                if prompt == "y":
+                    conn = sqlite3.connect("{}/.local/rcmanager/data/rcmanager.db".format(home_env_var))
+                    cursor = conn.cursor()
+                    try:
+                        cursor.execute("INSERT INTO rcfile (name, shell, content, note)\n"
+                                       "VALUES (?,?,?,?)", (upload_file.getname(), upload_file.getshell(),
+                                                            upload_file.getcontent(), upload_file.getnote()))
+                        conn.commit()
+
+                    except sqlite3.Error as e:
+                        fout = open("{}/.local/rcmanager/logs/upload.err.log".format(home_env_var), "wt")
+                        print(e, file=fout)
+                        fout.close()
+                        print("An error occurred! Please check log file in \n"
+                              "~/.local/rcmanager/logs")
+                        exit()
+
+                    finally:
+                        conn.close()
+
+                elif prompt == "n":
+                    exit()
+
+                else:
+                    print("Please either enter y or n")
+                    exit()
 
 
 @rcmanager.command()
