@@ -29,4 +29,3 @@ dependencies:
   - xz=5.2.5=h516909a_1
   - yaml=0.2.5=h516909a_0
   - zlib=1.2.11=h516909a_1009
-prefix: /home/nucci/anaconda3/envs/rcmanager
