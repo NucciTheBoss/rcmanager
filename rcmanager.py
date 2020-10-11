@@ -263,7 +263,6 @@ class Backup:
 
 # TODO: Write remove method
 # TODO: Write update method
-# TODO: Write restore method
 # TODO: Write skel method
 # TODO: Write swap method
 @click.group(invoke_without_command=True)
@@ -421,7 +420,7 @@ def update():
                                                  "zsh_default\n"
                                                  "fish_default")
 @click.option("-i", "--index", default=None, help="Index of skel file to rest to.")
-@click.option("--backup/--no-backup", default=True, help="Backup switched file. Default is backup")
+@click.option("--backup/--no-backup", default=True, help="Backup current rc file. Default is backup")
 @rcmanager.command()
 def reset(shell, name, index, backup):
     """Reset the specified shell's rc file."""
@@ -654,9 +653,62 @@ def reset(shell, name, index, backup):
 
 
 @rcmanager.command()
-def restore():
+@click.option("-s", "--shell", type=click.Choice(["bash", "csh", "ksh",
+                                                  "tcsh", "zsh", "fish"],
+                                                 case_sensitive=False),
+              default=None, help="Restore the shell's previous rc file.\n"
+                                 "(Uses rc file in backup table)")
+@click.option("--backup/--no-backup", default=True, help="Backup current rc file. Default is backup")
+def restore(shell, backup):
     """Restore a shell's previous rc file."""
     checkdatabase()
+    if shell is None:
+        print("Please specify which shell you want to restore.")
+
+    else:
+        conn = sqlite3.connect("{}/.local/rcmanager/data/rcmanager.db".format(home_env_var))
+        cursor = conn.cursor()
+        try:
+            # Pull down backup entry before
+            backup_file = cursor.execute("SELECT content FROM backup WHERE shell = ?", (shell.lower(),))
+            backup_file_contents = blobtotext(backup_file)
+
+            # Get old rc file info
+            new_backup = rcfileretriever(shell.lower())
+            if backup:
+                # Delete old backup from backup table
+                cursor.execute("DELETE FROM backup WHERE EXISTS(SELECT * FROM backup WHERE shell = ?)",
+                               (new_backup.getshell(),))
+
+                # Upload new backup
+                cursor.execute("INSERT INTO backup (shell, content) VALUES (?,?)",
+                               (new_backup.getshell(), new_backup.toblob()))
+
+                conn.commit()
+
+            # Delete old rc file and write new one
+            os.remove(new_backup.getpath())
+
+            fout = open(new_backup.getpath(), "wt")
+            fout.write(backup_file_contents)
+            fout.close()
+
+            # Tell user to log out and log back in
+            print("In order for changes to {} to take effect, "
+                  "please logout and log back into your current "
+                  "session.".format(new_backup.getrcfilename()))
+
+        except sqlite3.Error as e:
+            conn.rollback()
+            fout = open("{}/.local/rcmanager/logs/restore.err.log".format(home_env_var), "wt")
+            print(e, file=fout)
+            fout.close()
+            print("An error occurred! Please check log file in \n"
+                  "~/.local/rcmanager/logs")
+            exit()
+
+        finally:
+            conn.close()
 
 
 @rcmanager.command()
