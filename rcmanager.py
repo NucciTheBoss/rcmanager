@@ -129,6 +129,45 @@ def underlength(string, max_length):
         return False
 
 
+# Function to retrieve RC file from proper location
+# Returns Backup class
+def rcfileretriever(shell):
+    # Get RC file based on specified shell
+    if shell.lower() == "bash":
+        # .bashrc is usually located in users home directory
+        bash_file = Backup(shell.lower(), home_env_var + "/.bashrc", ".bashrc")
+        return bash_file
+
+    elif shell.lower() == "csh":
+        # .cshrc is usually located in users home directory
+        csh_file = Backup(shell.lower(), home_env_var + "/.cshrc", ".cshrc")
+        return csh_file
+
+    elif shell.lower() == "ksh":
+        # .kshrc is also usually located in the home directory
+        ksh_file = Backup(shell.lower(), home_env_var + "/.kshrc", ".kshrc")
+        return ksh_file
+
+    elif shell.lower() == "tcsh":
+        # .tcshrc is in the home directory too
+        tcsh_file = Backup(shell.lower(), home_env_var + "/.tcshrc", ".tcshrc")
+        return tcsh_file
+
+    elif shell.lower() == "zsh":
+        # Everyone is in the home directory except for fish
+        zsh_file = Backup(shell.lower(), home_env_var + "/.zshrc", ".zshrc")
+        return zsh_file
+
+    elif shell.lower() == "fish":
+        # In ~/.config, always gotta be special
+        # Always my favorite though boo <3
+        fish_file = Backup(shell.lower(), home_env_var + "/.config/fish/config.fish", "config.fish")
+        return fish_file
+
+    else:
+        return "Error file not found"
+
+
 # Rc file class to encapsulate rc file data
 class RCfile:
     def __init__(self, name, shell, content, note):
@@ -201,6 +240,26 @@ class RCfile:
         table = [["Name:", self.name], ["Shell:", self.shell],
                  ["Rc File:", rcfile_path], ["Note:", self.note]]
         print(tabulate(table, tablefmt="rst"))
+
+
+# Backup class to encapsulate backup file data
+class Backup:
+    def __init__(self, shell, path_to_rc_file, rc_file_name):
+        self.shell = shell
+        self.path_to_rc_file = path_to_rc_file
+        self.rc_file_name = rc_file_name
+
+    def getshell(self):
+        return self.shell.lower()
+
+    def getpath(self):
+        return self.path_to_rc_file
+
+    def getrcfilename(self):
+        return self. rc_file_name
+
+    def toblob(self):
+        return toblob(self.path_to_rc_file)
 
 
 # TODO: Write remove method
@@ -321,10 +380,249 @@ def update():
     checkdatabase()
 
 
+@click.option("-s", "--shell", type=click.Choice(["bash", "csh", "ksh",
+                                                  "tcsh", "zsh", "fish"],
+                                                 case_sensitive=False),
+              default=None, help="Shell's RC file to reset")
+@click.option("-n", "--name", default=None, help="Name of skel file to reset to.\n"
+                                                 "\nDefaults for each shell are:\n"
+                                                 "\nbash_default\n"
+                                                 "csh_default\n"
+                                                 "ksh_default\n"
+                                                 "tcsh_default\n"
+                                                 "zsh_default\n"
+                                                 "fish_default")
+@click.option("-i", "--index", default=None, help="Index of skel file to rest to.")
+@click.option("--backup/--no-backup", default=True, help="Backup switched file. Default is backup")
 @rcmanager.command()
-def reset():
+def reset(shell, name, index, backup):
     """Reset the specified shell's rc file."""
     checkdatabase()
+    if shell is None:
+        print("Please specify what shell you would like to reset.")
+        exit()
+
+    if index is not None and name is not None:
+        print("Please only use -n, --name or -i, --index. No need for both.")
+
+    # Default method for if the user only specifies the shell
+    elif index is None and name is None:
+        # Select the default skel file in the skel table
+        if shell.lower() == "bash":
+            name = "bash_default"
+
+        elif shell.lower() == "csh":
+            name = "csh_default"
+
+        elif shell.lower() == "ksh":
+            name = "ksh_default"
+
+        elif shell.lower() == "tcsh":
+            name = "tcsh_default"
+
+        elif shell.lower() == "zsh":
+            name = "zsh_default"
+
+        elif shell.lower() == "fish":
+            name = "fish_default"
+
+        else:
+            print("Invalid shell specified. Use 'rcmanager reset --help' for available shell options")
+            exit()
+
+        # Once default skel file is selected, pull and swap
+        conn = sqlite3.connect("{}/.local/rcmanager/data/rcmanager.db".format(home_env_var))
+        cursor = conn.cursor()
+
+        try:
+            # If the user wants a backup of their rc file
+            if backup:
+                backup_file = rcfileretriever(shell.lower())  # Returns Backup class
+                # Delete old backup of shell
+                cursor.execute("DELETE FROM backup WHERE EXISTS(SELECT * FROM backup WHERE shell = ?)",
+                               (shell.lower(),))
+                # Insert new backup into database
+                cursor.execute("INSERT INTO backup (shell, content) VALUES (?,?)",
+                               (backup_file.getshell(), backup_file.toblob()))
+                # Once new backup is added, delete old rc file
+                os.remove(backup_file.getpath())
+                # Pull file from skel and set as new rc file
+                new_rc_file = cursor.execute("SELECT content FROM skel WHERE name = ?", (name,))
+                new_rc_content = blobtotext(new_rc_file)
+
+                # Write out contents to new rc file
+                fout = open(backup_file.getpath(), "wt")
+                fout.write(new_rc_content)
+                fout.close()
+
+                # Commit changes to backup table
+                conn.commit()
+
+                # Tell user to log out and log back in
+                print("In order for changes to {} to take effect, "
+                      "please logout and log back into your current "
+                      "session.".format(backup_file.getrcfilename()))
+
+            else:
+                # Use backup class to get path, but only need it for path
+                file_to_replace = rcfileretriever(shell.lower())
+                # Delete old rc file
+                os.remove(file_to_replace.getpath())
+                # Get new rc file from skel
+                new_rc_file = cursor.execute("SELECT content FROM skel WHERE name = ?", (name,))
+                new_rc_content = blobtotext(new_rc_file)
+
+                # Write out contents to new rc file
+                fout = open(file_to_replace.getpath(), "wt")
+                fout.write(new_rc_content)
+                fout.close()
+
+                # Tell user to log out and log back in
+                print("In order for changes to {} to take effect, "
+                      "please logout and log back into your current "
+                      "session.".format(file_to_replace.getrcfilename()))
+
+        except sqlite3.Error as e:
+            conn.rollback()
+            fout = open("{}/.local/rcmanager/logs/reset.err.log".format(home_env_var), "wt")
+            print(e, file=fout)
+            fout.close()
+            print("An error occurred! Please check log file in \n"
+                  "~/.local/rcmanager/logs")
+            exit()
+
+        finally:
+            conn.close()
+
+    # Use skel file specified by index
+    elif index is not None and name is None:
+        conn = sqlite3.connect("{}/.local/rcmanager/data/rcmanager.db".format(home_env_var))
+        cursor = conn.cursor()
+        try:
+            if backup:
+                backup_file = rcfileretriever(shell.lower())  # Returns Backup class
+                # Delete old backup of shell
+                cursor.execute("DELETE FROM backup WHERE EXISTS(SELECT * FROM backup WHERE shell = ?)",
+                               (shell.lower(),))
+                # Insert new backup into database
+                cursor.execute("INSERT INTO backup (shell, content) VALUES (?,?)",
+                               (backup_file.getshell(), backup_file.toblob()))
+                # Once new backup is added, delete old rc file
+                os.remove(backup_file.getpath())
+                # Pull file from skel and set as new rc file
+                new_rc_file = cursor.execute("SELECT content FROM skel WHERE id = ?", (index,))
+                new_rc_content = blobtotext(new_rc_file)
+
+                # Write out contents to new rc file
+                fout = open(backup_file.getpath(), "wt")
+                fout.write(new_rc_content)
+                fout.close()
+
+                # Commit changes to backup table
+                conn.commit()
+
+                # Tell user to log out and log back in
+                print("In order for changes to {} to take effect, "
+                      "please logout and log back into your current "
+                      "session.".format(backup_file.getrcfilename()))
+
+            else:
+                # Use backup class to get path, but only need it for path
+                file_to_replace = rcfileretriever(shell.lower())
+                # Delete old rc file
+                os.remove(file_to_replace.getpath())
+                # Get new rc file from skel
+                new_rc_file = cursor.execute("SELECT content FROM skel WHERE id = ?", (index,))
+                new_rc_content = blobtotext(new_rc_file)
+
+                # Write out contents to new rc file
+                fout = open(file_to_replace.getpath(), "wt")
+                fout.write(new_rc_content)
+                fout.close()
+
+                # Tell user to log out and log back in
+                print("In order for changes to {} to take effect, "
+                      "please logout and log back into your current "
+                      "session.".format(file_to_replace.getrcfilename()))
+
+        except sqlite3.Error as e:
+            conn.rollback()
+            fout = open("{}/.local/rcmanager/logs/reset.err.log".format(home_env_var), "wt")
+            print(e, file=fout)
+            fout.close()
+            print("An error occurred! Please check log file in \n"
+                  "~/.local/rcmanager/logs")
+            exit()
+
+        finally:
+            conn.close()
+
+    # Use skel file specified by name
+    elif index is None and name is not None:
+        conn = sqlite3.connect("{}/.local/rcmanager/data/rcmanager.db".format(home_env_var))
+        cursor = conn.cursor()
+        try:
+            if backup:
+                backup_file = rcfileretriever(shell.lower())  # Returns Backup class
+                # Delete old backup of shell
+                cursor.execute("DELETE FROM backup WHERE EXISTS(SELECT * FROM backup WHERE shell = ?)",
+                               (shell.lower(),))
+                # Insert new backup into database
+                cursor.execute("INSERT INTO backup (shell, content) VALUES (?,?)",
+                               (backup_file.getshell(), backup_file.toblob()))
+                # Once new backup is added, delete old rc file
+                os.remove(backup_file.getpath())
+                # Pull file from skel and set as new rc file
+                new_rc_file = cursor.execute("SELECT content FROM skel WHERE name = ?", (name,))
+                new_rc_content = blobtotext(new_rc_file)
+
+                # Write out contents to new rc file
+                fout = open(backup_file.getpath(), "wt")
+                fout.write(new_rc_content)
+                fout.close()
+
+                # Commit changes to backup table
+                conn.commit()
+
+                # Tell user to log out and log back in
+                print("In order for changes to {} to take effect, "
+                      "please logout and log back into your current "
+                      "session.".format(backup_file.getrcfilename()))
+
+            else:
+                # Use backup class to get path, but only need it for path
+                file_to_replace = rcfileretriever(shell.lower())
+                # Delete old rc file
+                os.remove(file_to_replace.getpath())
+                # Get new rc file from skel
+                new_rc_file = cursor.execute("SELECT content FROM skel WHERE name = ?", (name,))
+                new_rc_content = blobtotext(new_rc_file)
+
+                # Write out contents to new rc file
+                fout = open(file_to_replace.getpath(), "wt")
+                fout.write(new_rc_content)
+                fout.close()
+
+                # Tell user to log out and log back in
+                print("In order for changes to {} to take effect, "
+                      "please logout and log back into your current "
+                      "session.".format(file_to_replace.getrcfilename()))
+
+        except sqlite3.Error as e:
+            conn.rollback()
+            fout = open("{}/.local/rcmanager/logs/reset.err.log".format(home_env_var), "wt")
+            print(e, file=fout)
+            fout.close()
+            print("An error occurred! Please check log file in \n"
+                  "~/.local/rcmanager/logs")
+            exit()
+
+        finally:
+            conn.close()
+
+    else:
+        print("Invalid option specified. Please use "
+              "rcmanager reset --help for help.")
 
 
 @rcmanager.command()
