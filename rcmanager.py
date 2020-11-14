@@ -1314,8 +1314,146 @@ def skel():
 
 
 @rcmanager.command()
-def swap():
+@click.option("-s", "--shell", type=click.Choice(["bash", "csh", "ksh",
+                                                  "tcsh", "zsh", "fish"],
+                                                 case_sensitive=False),
+              default=None, help="Swap out shell's current rc file")
+@click.option("-n", "--name", default=None, help="Name of rc file to swap current one with.")
+@click.option("-i", "--index", default=None, help="Index of rc file to swap current one with.")
+@click.option("--backup/--no-backup", default=True, help="Backup current rc file. Default is backup")
+def swap(shell, name, index, backup):
     """Swap rc files."""
+    if shell is None:
+        print("Please specify the shell whose rc file you would like to swap.")
+
+    else:
+        if name is None and index is None:
+            print("Please either use --name or --index to specify \n"
+                  "which rc file to use from the database.")
+
+        elif name is not None and index is None:
+            conn = sqlite3.connect("{}/.local/rcmanager/data/rcmanager.db".format(home_env_var))
+            cursor = conn.cursor()
+            try:
+                results = cursor.execute("SELECT shell, content FROM rcfile WHERE name = ?", (name,))
+                tmp_list = []
+                for row in results:
+                    tmp_list.append(row[0])
+                    tmp_list.append(row[1])
+
+                # Verify that the shells match
+                # If they don't, exit program
+                if tmp_list[0] != shell:
+                    print("Hmm. It seems that the shell of the requested rc file "
+                          "does not match with the requested shell. Please verify "
+                          "that the requested rc file's shell matches the shell "
+                          "you are swapping rc files for.")
+                    exit()
+
+                # Convert blob to text
+                swap_file_contents = blobtotext(tmp_list[1])
+                # Backup the current rc file
+                new_backup = rcfileretriever(shell.lower())
+                if backup:
+                    # Delete old backup from backup table
+                    cursor.execute("DELETE FROM backup WHERE EXISTS(SELECT * FROM backup WHERE shell = ?)",
+                                   (new_backup.getshell(),))
+
+                    # Upload new backup
+                    cursor.execute("INSERT INTO backup (shell, content) VALUES (?,?)",
+                                   (new_backup.getshell(), new_backup.toblob()))
+
+                    conn.commit()
+
+                # Now write new rc file
+                os.remove(new_backup.getpath())
+
+                fout = open(new_backup.getpath(), "wt")
+                fout.write(swap_file_contents)
+                fout.close()
+
+                # Tell user to log out and log back in
+                print("In order for changes to {} to take effect, "
+                      "please logout and log back into your current "
+                      "session.".format(new_backup.getrcfilename()))
+
+            except sqlite3.Error as e:
+                conn.rollback()
+                fout = open("{}/.local/rcmanager/logs/swap.err.log".format(home_env_var), "wt")
+                print(e, file=fout)
+                fout.close()
+                print("An error occurred! Please check log file in \n"
+                      "~/.local/rcmanager/logs")
+                exit()
+
+            finally:
+                conn.close()
+
+        elif name is None and index is not None:
+            conn = sqlite3.connect("{}/.local/rcmanager/data/rcmanager.db".format(home_env_var))
+            cursor = conn.cursor()
+            try:
+                results = cursor.execute("SELECT shell, content FROM rcfile WHERE id = ?", (index,))
+                tmp_list = []
+                for row in results:
+                    tmp_list.append(row[0])
+                    tmp_list.append(row[1])
+
+                # Verify that the shells match
+                # If they don't, exit program
+                if tmp_list[0] != shell:
+                    print("Hmm. It seems that the shell of the requested rc file "
+                          "does not match with the requested shell. Please verify "
+                          "that the requested rc file's shell matches the shell "
+                          "you are swapping rc files for.")
+                    exit()
+
+                # Convert blob to text
+                swap_file_contents = blobtotext(tmp_list[1])
+                # Backup the current rc file
+                new_backup = rcfileretriever(shell.lower())
+                if backup:
+                    # Delete old backup from backup table
+                    cursor.execute("DELETE FROM backup WHERE EXISTS(SELECT * FROM backup WHERE shell = ?)",
+                                   (new_backup.getshell(),))
+
+                    # Upload new backup
+                    cursor.execute("INSERT INTO backup (shell, content) VALUES (?,?)",
+                                   (new_backup.getshell(), new_backup.toblob()))
+
+                    conn.commit()
+
+                # Now write new rc file
+                os.remove(new_backup.getpath())
+
+                fout = open(new_backup.getpath(), "wt")
+                fout.write(swap_file_contents)
+                fout.close()
+
+                # Tell user to log out and log back in
+                print("In order for changes to {} to take effect, "
+                      "please logout and log back into your current "
+                      "session.".format(new_backup.getrcfilename()))
+
+            except sqlite3.Error as e:
+                conn.rollback()
+                fout = open("{}/.local/rcmanager/logs/swap.err.log".format(home_env_var), "wt")
+                print(e, file=fout)
+                fout.close()
+                print("An error occurred! Please check log file in \n"
+                      "~/.local/rcmanager/logs")
+                exit()
+
+            finally:
+                conn.close()
+
+        elif name is not None and index is not None:
+            print("Please only use either --name or --index. \n"
+                  "No need to use both.")
+
+        else:
+            print("Invalid option specified. Please use "
+                  "rcmanager swap --help for help")
 
 
 if __name__ == '__main__':
