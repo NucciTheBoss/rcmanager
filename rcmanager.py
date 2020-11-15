@@ -455,10 +455,182 @@ def remove(name, index):
               "rcmanager remove --help for help.")
 
 
+@click.option("-n", "--name", default=None, help="Name of the rc file whose content you wish to update.")
+@click.option("-i", "--index", default=None, help="Index of the rc file whose content you wish to update.")
+@click.option("--update_name", default=None, help="Set a new name for the specified rc file.")
+@click.option("--update_shell", default=None, help="Set a new shell for the specified rc file.")
+@click.option("--update_content", default=None, help="Set new rc file content for specified rc file.\n "
+                                                     "Specify the full path to file containing the new content "
+                                                     "for the rc file.")
+@click.option("--update_note", default=None, help="Set a new note for specified rc file.")
 @rcmanager.command()
-def update():
+def update(name, index, update_name, update_shell, update_content, update_note):
     """Update a rc file stored in the rc file database."""
     checkdatabase()
+    if name is None and index is None:
+        print("Please either use -n, --name or -i, --index "
+              "to specify which rc file entry you would like to update "
+              "in the database. Use rcmanager update --help "
+              "for help.")
+
+    elif name is not None and index is None:
+        conn = sqlite3.connect("{}/.local/rcmanager/data/rcmanager.db".format(home_env_var))
+        cursor = conn.cursor()
+        try:
+            if update_name is not None:
+                try:
+                    cursor.execute("UPDATE rcfile SET name = ? WHERE EXISTS(SELECT * FROM rcfile WHERE name = ?)",
+                                   (update_name, name))
+                    conn.commit()
+
+                except sqlite3.Error as e:
+                    conn.rollback()
+                    fout = open("{}/.local/rcmanager/logs/update.err.log".format(home_env_var), "wt")
+                    print(e, file=fout)
+                    fout.close()
+                    print("An error occurred! Please check log file in \n"
+                          "~/.local/rcmanager/logs")
+                    exit()
+
+            if update_shell is not None:
+                try:
+                    cursor.execute("UPDATE rcfile SET shell = ? WHERE EXISTS(SELECT * FROM rcfile WHERE name = ?)",
+                                   (update_shell, name))
+                    conn.commit()
+
+                except sqlite3.Error as e:
+                    conn.rollback()
+                    fout = open("{}/.local/rcmanager/logs/update.err.log".format(home_env_var), "wt")
+                    print(e, file=fout)
+                    fout.close()
+                    print("An error occurred! Please check log file in \n"
+                          "~/.local/rcmanager/logs")
+                    exit()
+
+            if update_content is not None:
+                try:
+                    cursor.execute("UPDATE rcfile SET content = ? WHERE EXISTS(SELECT * FROM rcfile WHERE name = ?)",
+                                   (update_content, name))
+                    conn.commit()
+
+                except sqlite3.Error as e:
+                    conn.rollback()
+                    fout = open("{}/.local/rcmanager/logs/update.err.log".format(home_env_var), "wt")
+                    print(e, file=fout)
+                    fout.close()
+                    print("An error occurred! Please check log file in \n"
+                          "~/.local/rcmanager/logs")
+                    exit()
+
+            if update_note is not None:
+                try:
+                    cursor.execute("UPDATE rcfile SET note = ? WHERE EXISTS(SELECT * FROM rcfile WHERE name = ?)",
+                                   (update_note, name))
+                    conn.commit()
+
+                except sqlite3.Error as e:
+                    conn.rollback()
+                    fout = open("{}/.local/rcmanager/logs/update.err.log".format(home_env_var), "wt")
+                    print(e, file=fout)
+                    fout.close()
+                    print("An error occurred! Please check log file in \n"
+                          "~/.local/rcmanager/logs")
+                    exit()
+
+        except sqlite3.Error as e:
+            conn.rollback()
+            fout = open("{}/.local/rcmanager/logs/update.err.log".format(home_env_var), "wt")
+            print(e, file=fout)
+            fout.close()
+            print("An error occurred! Please check log file in \n"
+                  "~/.local/rcmanager/logs")
+            exit()
+
+        finally:
+            conn.close()
+
+    elif name is None and index is not None:
+        conn = sqlite3.connect("{}/.local/rcmanager/data/rcmanager.db".format(home_env_var))
+        cursor = conn.cursor()
+        try:
+            if update_name is not None:
+                try:
+                    cursor.execute("UPDATE rcfile SET name = ? WHERE EXISTS(SELECT * FROM rcfile WHERE id = ?)",
+                                   (update_name, index))
+                    conn.commit()
+
+                except sqlite3.Error as e:
+                    conn.rollback()
+                    fout = open("{}/.local/rcmanager/logs/update.err.log".format(home_env_var), "wt")
+                    print(e, file=fout)
+                    fout.close()
+                    print("An error occurred! Please check log file in \n"
+                          "~/.local/rcmanager/logs")
+                    exit()
+
+            if update_shell is not None:
+                try:
+                    cursor.execute("UPDATE rcfile SET shell = ? WHERE EXISTS(SELECT * FROM rcfile WHERE id = ?)",
+                                   (update_shell, index))
+                    conn.commit()
+
+                except sqlite3.Error as e:
+                    conn.rollback()
+                    fout = open("{}/.local/rcmanager/logs/update.err.log".format(home_env_var), "wt")
+                    print(e, file=fout)
+                    fout.close()
+                    print("An error occurred! Please check log file in \n"
+                          "~/.local/rcmanager/logs")
+                    exit()
+
+            if update_content is not None:
+                try:
+                    cursor.execute("UPDATE rcfile SET content = ? WHERE EXISTS(SELECT * FROM rcfile WHERE id = ?)",
+                                   (update_content, index))
+                    conn.commit()
+
+                except sqlite3.Error as e:
+                    conn.rollback()
+                    fout = open("{}/.local/rcmanager/logs/update.err.log".format(home_env_var), "wt")
+                    print(e, file=fout)
+                    fout.close()
+                    print("An error occurred! Please check log file in \n"
+                          "~/.local/rcmanager/logs")
+                    exit()
+
+            if update_note is not None:
+                try:
+                    cursor.execute("UPDATE rcfile SET note = ? WHERE EXISTS(SELECT * FROM rcfile WHERE id = ?)",
+                                   (update_note, index))
+                    conn.commit()
+
+                except sqlite3.Error as e:
+                    conn.rollback()
+                    fout = open("{}/.local/rcmanager/logs/update.err.log".format(home_env_var), "wt")
+                    print(e, file=fout)
+                    fout.close()
+                    print("An error occurred! Please check log file in \n"
+                          "~/.local/rcmanager/logs")
+                    exit()
+
+        except sqlite3.Error as e:
+            conn.rollback()
+            fout = open("{}/.local/rcmanager/logs/update.err.log".format(home_env_var), "wt")
+            print(e, file=fout)
+            fout.close()
+            print("An error occurred! Please check log file in \n"
+                  "~/.local/rcmanager/logs")
+            exit()
+
+        finally:
+            conn.close()
+
+    elif name is not None and index is not None:
+        print("Please only use -n, --name or -i, --index. No need for both.")
+
+    else:
+        print("Invalid option specified. Please use "
+              "rcmanager update --help for help.")
 
 
 @click.option("-s", "--shell", type=click.Choice(["bash", "csh", "ksh",
