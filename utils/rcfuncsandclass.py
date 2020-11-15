@@ -1,6 +1,8 @@
 import os
 import sqlite3
 from tabulate import tabulate
+# Local modules
+from .rcerror import rcerrormsg
 
 
 # Rc file class to encapsulate rc file data
@@ -126,13 +128,8 @@ def checkdatabase(env_home):
                 os.system("curl -s -o /tmp/tmp_fish "
                           "https://raw.githubusercontent.com/NucciTheBoss/rcmanager/master/share/skel/config.fish")
 
-            except OSError:
-                fout = open("{}/.local/rcmanager/logs/initialization.err.log".format(env_home), "wt")
-                print("The was an issue retrieving skel files from GitHub. \n"
-                      "Please contact owner of rcmanager repository", file=fout)
-                fout.close()
-                print("An error occurred! Please check log file in \n"
-                      "~/.local/rcmanager/logs")
+            except OSError as e:
+                rcerrormsg(env_home, "initialization", e)
                 exit()
 
             # Insert skel files into skel table
@@ -153,11 +150,7 @@ def checkdatabase(env_home):
 
         except sqlite3.Error as e:
             conn.rollback()
-            fout = open("{}/.local/rcmanager/logs/initialization.err.log".format(env_home), "wt")
-            print(e, file=fout)
-            fout.close()
-            print("An error occurred! Please check log file in \n"
-                  "~/.local/rcmanager/logs")
+            rcerrormsg(env_home, "initialization", e)
             exit()
 
         finally:
