@@ -4,263 +4,13 @@ import sqlite3
 from tabulate import tabulate
 # Local modules
 from utils import rcerror
+from utils.rcfuncsandclass import RCfile  # Class
+from utils.rcfuncsandclass import checkdatabase  # Function
+from utils.rcfuncsandclass import blobtotext  # Function
+from utils.rcfuncsandclass import rcfileretriever  # Function
 
 # Global variables
 home_env_var = os.getenv('HOME')
-
-
-# Check for the rcmanager database. If not available then create
-# a new database to be used by rcmanager
-def checkdatabase():
-    if os.path.exists("{}/.local/rcmanager/data/rcmanager.db".format(home_env_var)):
-        return
-
-    else:
-        os.system("mkdir -p {}/.local/rcmanager/data".format(home_env_var))
-        os.system("mkdir -p {}/.local/rcmanager/logs".format(home_env_var))
-        os.system("mkdir -p {}/.local/rcmanager/tmp".format(home_env_var))
-        os.system("touch {}/.local/rcmanager/data/rcmanager.db".format(home_env_var))  # Create db file
-
-        # Populate the database with default tables
-        conn = sqlite3.connect("{}/.local/rcmanager/data/rcmanager.db".format(home_env_var))
-        cursor = conn.cursor()
-        try:
-            cursor.execute('''CREATE TABLE rcfile(
-                                id INTEGER PRIMARY KEY,
-                                name VARCHAR(20) UNIQUE,
-                                shell VARCHAR(10),
-                                content BLOB,
-                                note VARCHAR(100))''')
-            cursor.execute('''CREATE TABLE skel(
-                                id INTEGER PRIMARY KEY,
-                                name VARCHAR(20) UNIQUE,
-                                shell VARCHAR(10),
-                                content BLOB,
-                                note VARCHAR(100))''')
-            cursor.execute('''CREATE TABLE backup(
-                                id INTEGER PRIMARY KEY,
-                                shell VARCHAR(10),
-                                content BLOB)''')
-
-            # Once tables are created populate the skel table
-            # Pull off of github for the time being
-            try:
-                os.system("curl -s -o /tmp/tmp_bashrc "
-                          "https://raw.githubusercontent.com/NucciTheBoss/rcmanager/master/share/skel/.bashrc")
-                os.system("curl -s -o /tmp/tmp_cshrc "
-                          "https://raw.githubusercontent.com/NucciTheBoss/rcmanager/master/share/skel/.cshrc")
-                os.system("curl -s -o /tmp/tmp_kshrc "
-                          "https://raw.githubusercontent.com/NucciTheBoss/rcmanager/master/share/skel/.kshrc")
-                os.system("curl -s -o /tmp/tmp_tcshrc "
-                          "https://raw.githubusercontent.com/NucciTheBoss/rcmanager/master/share/skel/.tcshrc")
-                os.system("curl -s -o /tmp/tmp_zshrc "
-                          "https://raw.githubusercontent.com/NucciTheBoss/rcmanager/master/share/skel/.zshrc")
-                os.system("curl -s -o /tmp/tmp_fish "
-                          "https://raw.githubusercontent.com/NucciTheBoss/rcmanager/master/share/skel/config.fish")
-
-            except OSError:
-                fout = open("{}/.local/rcmanager/logs/initialization.err.log".format(home_env_var), "wt")
-                print("The was an issue retrieving skel files from GitHub. \n"
-                      "Please contact owner of rcmanager repository", file=fout)
-                fout.close()
-                print("An error occurred! Please check log file in \n"
-                      "~/.local/rcmanager/logs")
-                exit()
-
-            # Insert skel files into skel table
-            # Create list with name and location of skel rc file
-            skel_files = [("/tmp/tmp_bashrc", "bash"), ("/tmp/tmp_cshrc", "csh"), ("/tmp/tmp_kshrc", "ksh"),
-                          ("/tmp/tmp_tcshrc", "tcsh"), ("/tmp/tmp_zshrc", "zsh"), ("/tmp/tmp_fish", "fish")]
-
-            # Loop through list and add to rc file database
-            for item in skel_files:
-                fin = open(item[0], "rb")
-                tmp_blob = fin.read()
-                tmp_name = "{}_default".format(item[1])
-                tmp_note = "The default rc file for the {} shell".format(item[1])
-                cursor.execute('''INSERT INTO skel(name, shell, content, note)
-                                    VALUES(?,?,?,?)''', (tmp_name, item[1], tmp_blob, tmp_note))
-
-            conn.commit()
-
-        except sqlite3.Error as e:
-            conn.rollback()
-            fout = open("{}/.local/rcmanager/logs/initialization.err.log".format(home_env_var), "wt")
-            print(e, file=fout)
-            fout.close()
-            print("An error occurred! Please check log file in \n"
-                  "~/.local/rcmanager/logs")
-            exit()
-
-        finally:
-            conn.close()
-
-
-def toblob(filepath):
-    if os.path.exists(filepath):
-        fin = open(filepath, "rb")
-        tmp_blob = fin.read()
-        fin.close()
-        return tmp_blob
-
-    else:
-        return "err"
-
-
-def blobtotext(blob_data):
-    tmp_file = "{}/.local/rcmanager/tmp/tmp_file.txt".format(home_env_var)
-    # Write out the blob data to a temp text file
-    fout = open(tmp_file, "wb")
-    fout.write(blob_data)
-    fout.close()
-
-    # Open the text file and return the text data
-    fin = open(tmp_file, "rt")
-    tmp_txt = fin.read()
-    fin.close()
-    os.remove(tmp_file)
-    return tmp_txt
-
-
-def underlength(string, max_length):
-    if len(string) <= max_length:
-        return True
-
-    else:
-        return False
-
-
-# Function to retrieve RC file from proper location
-# Returns Backup class
-def rcfileretriever(shell):
-    # Get RC file based on specified shell
-    if shell.lower() == "bash":
-        # .bashrc is usually located in users home directory
-        bash_file = Backup(shell.lower(), home_env_var + "/.bashrc", ".bashrc")
-        return bash_file
-
-    elif shell.lower() == "csh":
-        # .cshrc is usually located in users home directory
-        csh_file = Backup(shell.lower(), home_env_var + "/.cshrc", ".cshrc")
-        return csh_file
-
-    elif shell.lower() == "ksh":
-        # .kshrc is also usually located in the home directory
-        ksh_file = Backup(shell.lower(), home_env_var + "/.kshrc", ".kshrc")
-        return ksh_file
-
-    elif shell.lower() == "tcsh":
-        # .tcshrc is in the home directory too
-        tcsh_file = Backup(shell.lower(), home_env_var + "/.tcshrc", ".tcshrc")
-        return tcsh_file
-
-    elif shell.lower() == "zsh":
-        # Everyone is in the home directory except for fish
-        zsh_file = Backup(shell.lower(), home_env_var + "/.zshrc", ".zshrc")
-        return zsh_file
-
-    elif shell.lower() == "fish":
-        # In ~/.config, always gotta be special
-        # Always my favorite though boo <3
-        fish_file = Backup(shell.lower(), home_env_var + "/.config/fish/config.fish", "config.fish")
-        return fish_file
-
-    else:
-        return "Error file not found"
-
-
-# Rc file class to encapsulate rc file data
-class RCfile:
-    def __init__(self, name, shell, content, note):
-        if underlength(name, 20):
-            self.name = name
-
-        else:
-            print("{}: Over 20 characters. Please shorten the name".format(name))
-            exit()
-
-        self.shell = shell
-
-        # Verify that content is a valid rc file
-        tmp_content = toblob(content)
-        if tmp_content == "err":
-            print("{}: Could not find rcfile. Please check your path".format(content))
-            exit()
-
-        else:
-            self.content = tmp_content  # BLOB of rcfile
-
-        if underlength(note, 100):
-            self.note = note  # A short description of the rcfile
-
-        else:
-            print("{}: Over 100 characters. Please shorten the note".format(note))
-            exit()
-
-    def getname(self):
-        return self.name
-
-    def getshell(self):
-        return self.shell
-
-    def getcontent(self):
-        return self.content
-
-    def getnote(self):
-        return self.note
-
-    def setname(self, new_name):
-        if underlength(new_name, 20):
-            self.name = new_name
-
-        else:
-            print("{}: Over 20 characters. Please shorten the name".format(new_name))
-            exit()
-
-    def setshell(self, new_shell):
-        self.shell = new_shell
-
-    def setcontent(self, new_content):
-        tmp_content = toblob(new_content)
-        if tmp_content == "err":
-            print("{}: Could not find rcfile. Please check your path".format(new_content))
-            exit()
-
-        else:
-            self.content = tmp_content
-
-    def setnote(self, new_note):
-        if underlength(new_note, 100):
-            self.note = new_note  # A short description of the rcfile
-
-        else:
-            print("{}: Over 100 characters. Please shorten the note".format(new_note))
-            exit()
-
-    def totable(self, rcfile_path):
-        table = [["Name:", self.name], ["Shell:", self.shell],
-                 ["Rc File:", rcfile_path], ["Note:", self.note]]
-        print(tabulate(table, tablefmt="rst"))
-
-
-# Backup class to encapsulate backup file data
-class Backup:
-    def __init__(self, shell, path_to_rc_file, rc_file_name):
-        self.shell = shell
-        self.path_to_rc_file = path_to_rc_file
-        self.rc_file_name = rc_file_name
-
-    def getshell(self):
-        return self.shell.lower()
-
-    def getpath(self):
-        return self.path_to_rc_file
-
-    def getrcfilename(self):
-        return self.rc_file_name
-
-    def toblob(self):
-        return toblob(self.path_to_rc_file)
 
 
 @click.group(invoke_without_command=True)
@@ -312,7 +62,7 @@ def rcmanager(version, license):
 @click.option("-y", "--yes", is_flag=True)
 def upload(name, shell, rcfile, note, yml_file, yes):
     """Upload a new rc file to the rc file database."""
-    checkdatabase()
+    checkdatabase(home_env_var)
     # Begin the upload process
     if yml_file is not None:
         # TODO: Write method to parse YAML file
@@ -390,7 +140,7 @@ def upload(name, shell, rcfile, note, yml_file, yes):
 @rcmanager.command()
 def remove(name, index):
     """Remove an rc file from the rc file database."""
-    checkdatabase()
+    checkdatabase(home_env_var)
     if name is None and index is None:
         print("Please either use -n, --name or -i, --index "
               "to specify which rc file you would like to delete "
@@ -450,7 +200,7 @@ def remove(name, index):
 @rcmanager.command()
 def update(name, index, update_name, update_shell, update_content, update_note):
     """Update a rc file stored in the rc file database."""
-    checkdatabase()
+    checkdatabase(home_env_var)
     if name is None and index is None:
         print("Please either use -n, --name or -i, --index "
               "to specify which rc file entry you would like to update "
@@ -594,7 +344,7 @@ def update(name, index, update_name, update_shell, update_content, update_note):
 @rcmanager.command()
 def reset(shell, name, index, backup):
     """Reset the specified shell's rc file."""
-    checkdatabase()
+    checkdatabase(home_env_var)
     if shell is None:
         print("Please specify what shell you would like to reset.")
         exit()
@@ -634,7 +384,7 @@ def reset(shell, name, index, backup):
         try:
             # If the user wants a backup of their rc file
             if backup:
-                backup_file = rcfileretriever(shell.lower())  # Returns Backup class
+                backup_file = rcfileretriever(shell.lower(), home_env_var)  # Returns Backup class
                 # Delete old backup of shell
                 cursor.execute("DELETE FROM backup WHERE EXISTS(SELECT * FROM backup WHERE shell = ?)",
                                (shell.lower(),))
@@ -645,7 +395,7 @@ def reset(shell, name, index, backup):
                 os.remove(backup_file.getpath())
                 # Pull file from skel and set as new rc file
                 new_rc_file = cursor.execute("SELECT content FROM skel WHERE name = ?", (name,))
-                new_rc_content = blobtotext(new_rc_file)
+                new_rc_content = blobtotext(new_rc_file, home_env_var)
 
                 # Write out contents to new rc file
                 fout = open(backup_file.getpath(), "wt")
@@ -662,12 +412,12 @@ def reset(shell, name, index, backup):
 
             else:
                 # Use backup class to get path, but only need it for path
-                file_to_replace = rcfileretriever(shell.lower())
+                file_to_replace = rcfileretriever(shell.lower(), home_env_var)
                 # Delete old rc file
                 os.remove(file_to_replace.getpath())
                 # Get new rc file from skel
                 new_rc_file = cursor.execute("SELECT content FROM skel WHERE name = ?", (name,))
-                new_rc_content = blobtotext(new_rc_file)
+                new_rc_content = blobtotext(new_rc_file, home_env_var)
 
                 # Write out contents to new rc file
                 fout = open(file_to_replace.getpath(), "wt")
@@ -693,7 +443,7 @@ def reset(shell, name, index, backup):
         cursor = conn.cursor()
         try:
             if backup:
-                backup_file = rcfileretriever(shell.lower())  # Returns Backup class
+                backup_file = rcfileretriever(shell.lower(), home_env_var)  # Returns Backup class
                 # Delete old backup of shell
                 cursor.execute("DELETE FROM backup WHERE EXISTS(SELECT * FROM backup WHERE shell = ?)",
                                (shell.lower(),))
@@ -704,7 +454,7 @@ def reset(shell, name, index, backup):
                 os.remove(backup_file.getpath())
                 # Pull file from skel and set as new rc file
                 new_rc_file = cursor.execute("SELECT content FROM skel WHERE id = ?", (index,))
-                new_rc_content = blobtotext(new_rc_file)
+                new_rc_content = blobtotext(new_rc_file, home_env_var)
 
                 # Write out contents to new rc file
                 fout = open(backup_file.getpath(), "wt")
@@ -721,12 +471,12 @@ def reset(shell, name, index, backup):
 
             else:
                 # Use backup class to get path, but only need it for path
-                file_to_replace = rcfileretriever(shell.lower())
+                file_to_replace = rcfileretriever(shell.lower(), home_env_var)
                 # Delete old rc file
                 os.remove(file_to_replace.getpath())
                 # Get new rc file from skel
                 new_rc_file = cursor.execute("SELECT content FROM skel WHERE id = ?", (index,))
-                new_rc_content = blobtotext(new_rc_file)
+                new_rc_content = blobtotext(new_rc_file, home_env_var)
 
                 # Write out contents to new rc file
                 fout = open(file_to_replace.getpath(), "wt")
@@ -752,7 +502,7 @@ def reset(shell, name, index, backup):
         cursor = conn.cursor()
         try:
             if backup:
-                backup_file = rcfileretriever(shell.lower())  # Returns Backup class
+                backup_file = rcfileretriever(shell.lower(), home_env_var)  # Returns Backup class
                 # Delete old backup of shell
                 cursor.execute("DELETE FROM backup WHERE EXISTS(SELECT * FROM backup WHERE shell = ?)",
                                (shell.lower(),))
@@ -763,7 +513,7 @@ def reset(shell, name, index, backup):
                 os.remove(backup_file.getpath())
                 # Pull file from skel and set as new rc file
                 new_rc_file = cursor.execute("SELECT content FROM skel WHERE name = ?", (name,))
-                new_rc_content = blobtotext(new_rc_file)
+                new_rc_content = blobtotext(new_rc_file, home_env_var)
 
                 # Write out contents to new rc file
                 fout = open(backup_file.getpath(), "wt")
@@ -780,12 +530,12 @@ def reset(shell, name, index, backup):
 
             else:
                 # Use backup class to get path, but only need it for path
-                file_to_replace = rcfileretriever(shell.lower())
+                file_to_replace = rcfileretriever(shell.lower(), home_env_var)
                 # Delete old rc file
                 os.remove(file_to_replace.getpath())
                 # Get new rc file from skel
                 new_rc_file = cursor.execute("SELECT content FROM skel WHERE name = ?", (name,))
-                new_rc_content = blobtotext(new_rc_file)
+                new_rc_content = blobtotext(new_rc_file, home_env_var)
 
                 # Write out contents to new rc file
                 fout = open(file_to_replace.getpath(), "wt")
@@ -819,7 +569,7 @@ def reset(shell, name, index, backup):
 @click.option("--backup/--no-backup", default=True, help="Backup current rc file. Default is backup")
 def restore(shell, backup):
     """Restore a shell's previous rc file."""
-    checkdatabase()
+    checkdatabase(home_env_var)
     if shell is None:
         print("Please specify which shell you want to restore.")
 
@@ -829,10 +579,10 @@ def restore(shell, backup):
         try:
             # Pull down backup entry before
             backup_file = cursor.execute("SELECT content FROM backup WHERE shell = ?", (shell.lower(),))
-            backup_file_contents = blobtotext(backup_file)
+            backup_file_contents = blobtotext(backup_file, home_env_var)
 
             # Get old rc file info
-            new_backup = rcfileretriever(shell.lower())
+            new_backup = rcfileretriever(shell.lower(), home_env_var)
             if backup:
                 # Delete old backup from backup table
                 cursor.execute("DELETE FROM backup WHERE EXISTS(SELECT * FROM backup WHERE shell = ?)",
@@ -878,7 +628,7 @@ def restore(shell, backup):
                                              "Warning: Output can potentially get very large")
 def list(table, index, name, shell, showrc):
     """List the contents of a table in the rc file database."""
-    checkdatabase()
+    checkdatabase(home_env_var)
     # Global variables for function
     headers = ["Index", "Name", "Shell", "Note"]
     fmt = "grid"
@@ -902,7 +652,7 @@ def list(table, index, name, shell, showrc):
                     # Create table to print out using tabulate
                     table = []
                     for row in results:
-                        table.append([row[0], row[1], row[2], blobtotext(row[3]), row[4]])
+                        table.append([row[0], row[1], row[2], blobtotext(row[3], home_env_var), row[4]])
 
                     print(tabulate(table, showrc_headers, tablefmt=showrc_fmt))
 
@@ -945,7 +695,7 @@ def list(table, index, name, shell, showrc):
                     # Create table to print out using tabulate
                     table = []
                     for row in results:
-                        table.append([row[0], row[1], row[2], blobtotext(row[3]), row[4]])
+                        table.append([row[0], row[1], row[2], blobtotext(row[3], home_env_var), row[4]])
 
                     print(tabulate(table, showrc_headers, tablefmt=showrc_fmt))
 
@@ -988,7 +738,7 @@ def list(table, index, name, shell, showrc):
                     # Create table to print out using tabulate
                     table = []
                     for row in results:
-                        table.append([row[0], row[1], row[2], blobtotext(row[3]), row[4]])
+                        table.append([row[0], row[1], row[2], blobtotext(row[3], home_env_var), row[4]])
 
                     print(tabulate(table, showrc_headers, tablefmt=showrc_fmt))
 
@@ -1031,7 +781,7 @@ def list(table, index, name, shell, showrc):
                     # Create table to print out using tabulate
                     table = []
                     for row in results:
-                        table.append([row[0], row[1], row[2], blobtotext(row[3]), row[4]])
+                        table.append([row[0], row[1], row[2], blobtotext(row[3], home_env_var), row[4]])
 
                     print(tabulate(table, showrc_headers, tablefmt=showrc_fmt))
 
@@ -1077,7 +827,7 @@ def list(table, index, name, shell, showrc):
                     # Create table to print out using tabulate
                     table = []
                     for row in results:
-                        table.append([row[0], row[1], row[2], blobtotext(row[3]), row[4]])
+                        table.append([row[0], row[1], row[2], blobtotext(row[3], home_env_var), row[4]])
 
                     print(tabulate(table, showrc_headers, tablefmt=showrc_fmt))
 
@@ -1120,7 +870,7 @@ def list(table, index, name, shell, showrc):
                     # Create table to print out using tabulate
                     table = []
                     for row in results:
-                        table.append([row[0], row[1], row[2], blobtotext(row[3]), row[4]])
+                        table.append([row[0], row[1], row[2], blobtotext(row[3], home_env_var), row[4]])
 
                     print(tabulate(table, showrc_headers, tablefmt=showrc_fmt))
 
@@ -1163,7 +913,7 @@ def list(table, index, name, shell, showrc):
                     # Create table to print out using tabulate
                     table = []
                     for row in results:
-                        table.append([row[0], row[1], row[2], blobtotext(row[3]), row[4]])
+                        table.append([row[0], row[1], row[2], blobtotext(row[3], home_env_var), row[4]])
 
                     print(tabulate(table, showrc_headers, tablefmt=showrc_fmt))
 
@@ -1206,7 +956,7 @@ def list(table, index, name, shell, showrc):
                     # Create table to print out using tabulate
                     table = []
                     for row in results:
-                        table.append([row[0], row[1], row[2], blobtotext(row[3]), row[4]])
+                        table.append([row[0], row[1], row[2], blobtotext(row[3], home_env_var), row[4]])
 
                     print(tabulate(table, showrc_headers, tablefmt=showrc_fmt))
 
@@ -1250,7 +1000,7 @@ def list(table, index, name, shell, showrc):
                     results = cursor.execute("SELECT id, shell, content FROM backup")
                     table = []
                     for row in results:
-                        table.append([row[0], row[1], blobtotext(row[2])])
+                        table.append([row[0], row[1], blobtotext(row[2], home_env_var)])
 
                     print(tabulate(table, backup_showrc_headers, tablefmt=showrc_fmt))
 
@@ -1289,7 +1039,7 @@ def list(table, index, name, shell, showrc):
                     results = cursor.execute("SELECT id, shell, content FROM backup WHERE id = ?", (index,))
                     table = []
                     for row in results:
-                        table.append([row[0], row[1], blobtotext(row[2])])
+                        table.append([row[0], row[1], blobtotext(row[2], home_env_var)])
 
                     print(tabulate(table, backup_showrc_headers, tablefmt=showrc_fmt))
 
@@ -1334,7 +1084,7 @@ def list(table, index, name, shell, showrc):
                     results = cursor.execute("SELECT id, shell, content FROM backup WHERE shell = ?", (shell,))
                     table = []
                     for row in results:
-                        table.append([row[0], row[1], blobtotext(row[2])])
+                        table.append([row[0], row[1], blobtotext(row[2], home_env_var)])
 
                     print(tabulate(table, backup_showrc_headers, tablefmt=showrc_fmt))
 
@@ -1411,9 +1161,9 @@ def swap(shell, name, index, backup):
                     exit()
 
                 # Convert blob to text
-                swap_file_contents = blobtotext(tmp_list[1])
+                swap_file_contents = blobtotext(tmp_list[1], home_env_var)
                 # Backup the current rc file
-                new_backup = rcfileretriever(shell.lower())
+                new_backup = rcfileretriever(shell.lower(), home_env_var)
                 if backup:
                     # Delete old backup from backup table
                     cursor.execute("DELETE FROM backup WHERE EXISTS(SELECT * FROM backup WHERE shell = ?)",
@@ -1465,9 +1215,9 @@ def swap(shell, name, index, backup):
                     exit()
 
                 # Convert blob to text
-                swap_file_contents = blobtotext(tmp_list[1])
+                swap_file_contents = blobtotext(tmp_list[1], home_env_var)
                 # Backup the current rc file
-                new_backup = rcfileretriever(shell.lower())
+                new_backup = rcfileretriever(shell.lower(), home_env_var)
                 if backup:
                     # Delete old backup from backup table
                     cursor.execute("DELETE FROM backup WHERE EXISTS(SELECT * FROM backup WHERE shell = ?)",
