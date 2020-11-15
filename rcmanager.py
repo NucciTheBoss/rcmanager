@@ -2,6 +2,8 @@ import click
 import os
 import sqlite3
 from tabulate import tabulate
+# Local modules
+from utils import rcerror
 
 # Global variables
 home_env_var = os.getenv('HOME')
@@ -349,11 +351,7 @@ def upload(name, shell, rcfile, note, yml_file, yes):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/upload.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "upload", e)
                     exit()
 
                 finally:
@@ -373,11 +371,7 @@ def upload(name, shell, rcfile, note, yml_file, yes):
 
                     except sqlite3.Error as e:
                         conn.rollback()
-                        fout = open("{}/.local/rcmanager/logs/upload.err.log".format(home_env_var), "wt")
-                        print(e, file=fout)
-                        fout.close()
-                        print("An error occurred! Please check log file in \n"
-                              "~/.local/rcmanager/logs")
+                        rcerror.rcerrormsg(home_env_var, "upload", e)
                         exit()
 
                     finally:
@@ -414,11 +408,7 @@ def remove(name, index):
 
         except sqlite3.Error as e:
             conn.rollback()
-            fout = open("{}/.local/rcmanager/logs/remove.err.log".format(home_env_var), "wt")
-            print(e, file=fout)
-            fout.close()
-            print("An error occurred! Please check log file in \n"
-                  "~/.local/rcmanager/logs")
+            rcerror.rcerrormsg(home_env_var, "remove", e)
             exit()
 
         finally:
@@ -435,11 +425,7 @@ def remove(name, index):
 
         except sqlite3.Error as e:
             conn.rollback()
-            fout = open("{}/.local/rcmanager/logs/remove.err.log".format(home_env_var), "wt")
-            print(e, file=fout)
-            fout.close()
-            print("An error occurred! Please check log file in \n"
-                  "~/.local/rcmanager/logs")
+            rcerror.rcerrormsg(home_env_var, "remove", e)
             exit()
 
         finally:
@@ -483,11 +469,7 @@ def update(name, index, update_name, update_shell, update_content, update_note):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/update.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "update", e)
                     exit()
 
             if update_shell is not None:
@@ -498,11 +480,7 @@ def update(name, index, update_name, update_shell, update_content, update_note):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/update.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "update", e)
                     exit()
 
             if update_content is not None:
@@ -513,11 +491,7 @@ def update(name, index, update_name, update_shell, update_content, update_note):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/update.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "update", e)
                     exit()
 
             if update_note is not None:
@@ -528,20 +502,12 @@ def update(name, index, update_name, update_shell, update_content, update_note):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/update.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "update", e)
                     exit()
 
         except sqlite3.Error as e:
             conn.rollback()
-            fout = open("{}/.local/rcmanager/logs/update.err.log".format(home_env_var), "wt")
-            print(e, file=fout)
-            fout.close()
-            print("An error occurred! Please check log file in \n"
-                  "~/.local/rcmanager/logs")
+            rcerror.rcerrormsg(home_env_var, "update", e)
             exit()
 
         finally:
@@ -559,11 +525,7 @@ def update(name, index, update_name, update_shell, update_content, update_note):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/update.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "update", e)
                     exit()
 
             if update_shell is not None:
@@ -574,11 +536,7 @@ def update(name, index, update_name, update_shell, update_content, update_note):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/update.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "update", e)
                     exit()
 
             if update_content is not None:
@@ -589,11 +547,7 @@ def update(name, index, update_name, update_shell, update_content, update_note):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/update.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "update", e)
                     exit()
 
             if update_note is not None:
@@ -604,20 +558,12 @@ def update(name, index, update_name, update_shell, update_content, update_note):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/update.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "update", e)
                     exit()
 
         except sqlite3.Error as e:
             conn.rollback()
-            fout = open("{}/.local/rcmanager/logs/update.err.log".format(home_env_var), "wt")
-            print(e, file=fout)
-            fout.close()
-            print("An error occurred! Please check log file in \n"
-                  "~/.local/rcmanager/logs")
+            rcerror.rcerrormsg(home_env_var, "update", e)
             exit()
 
         finally:
@@ -735,11 +681,7 @@ def reset(shell, name, index, backup):
 
         except sqlite3.Error as e:
             conn.rollback()
-            fout = open("{}/.local/rcmanager/logs/reset.err.log".format(home_env_var), "wt")
-            print(e, file=fout)
-            fout.close()
-            print("An error occurred! Please check log file in \n"
-                  "~/.local/rcmanager/logs")
+            rcerror.rcerrormsg(home_env_var, "reset", e)
             exit()
 
         finally:
@@ -798,11 +740,7 @@ def reset(shell, name, index, backup):
 
         except sqlite3.Error as e:
             conn.rollback()
-            fout = open("{}/.local/rcmanager/logs/reset.err.log".format(home_env_var), "wt")
-            print(e, file=fout)
-            fout.close()
-            print("An error occurred! Please check log file in \n"
-                  "~/.local/rcmanager/logs")
+            rcerror.rcerrormsg(home_env_var, "reset", e)
             exit()
 
         finally:
@@ -861,11 +799,7 @@ def reset(shell, name, index, backup):
 
         except sqlite3.Error as e:
             conn.rollback()
-            fout = open("{}/.local/rcmanager/logs/reset.err.log".format(home_env_var), "wt")
-            print(e, file=fout)
-            fout.close()
-            print("An error occurred! Please check log file in \n"
-                  "~/.local/rcmanager/logs")
+            rcerror.rcerrormsg(home_env_var, "reset", e)
             exit()
 
         finally:
@@ -924,11 +858,7 @@ def restore(shell, backup):
 
         except sqlite3.Error as e:
             conn.rollback()
-            fout = open("{}/.local/rcmanager/logs/restore.err.log".format(home_env_var), "wt")
-            print(e, file=fout)
-            fout.close()
-            print("An error occurred! Please check log file in \n"
-                  "~/.local/rcmanager/logs")
+            rcerror.rcerrormsg(home_env_var, "restore", e)
             exit()
 
         finally:
@@ -978,11 +908,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1002,11 +928,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1029,11 +951,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1053,11 +971,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1080,11 +994,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1104,11 +1014,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1131,11 +1037,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1155,11 +1057,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1185,11 +1083,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1209,11 +1103,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1236,11 +1126,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1260,11 +1146,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1287,11 +1169,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1311,11 +1189,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1338,11 +1212,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1362,11 +1232,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1390,11 +1256,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1413,11 +1275,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1437,11 +1295,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1460,11 +1314,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1490,11 +1340,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1513,11 +1359,7 @@ def list(table, index, name, shell, showrc):
 
                 except sqlite3.Error as e:
                     conn.rollback()
-                    fout = open("{}/.local/rcmanager/logs/list.err.log".format(home_env_var), "wt")
-                    print(e, file=fout)
-                    fout.close()
-                    print("An error occurred! Please check log file in \n"
-                          "~/.local/rcmanager/logs")
+                    rcerror.rcerrormsg(home_env_var, "list", e)
                     exit()
 
                 finally:
@@ -1597,11 +1439,7 @@ def swap(shell, name, index, backup):
 
             except sqlite3.Error as e:
                 conn.rollback()
-                fout = open("{}/.local/rcmanager/logs/swap.err.log".format(home_env_var), "wt")
-                print(e, file=fout)
-                fout.close()
-                print("An error occurred! Please check log file in \n"
-                      "~/.local/rcmanager/logs")
+                rcerror.rcerrormsg(home_env_var, "swap", e)
                 exit()
 
             finally:
@@ -1655,11 +1493,7 @@ def swap(shell, name, index, backup):
 
             except sqlite3.Error as e:
                 conn.rollback()
-                fout = open("{}/.local/rcmanager/logs/swap.err.log".format(home_env_var), "wt")
-                print(e, file=fout)
-                fout.close()
-                print("An error occurred! Please check log file in \n"
-                      "~/.local/rcmanager/logs")
+                rcerror.rcerrormsg(home_env_var, "swap", e)
                 exit()
 
             finally:
