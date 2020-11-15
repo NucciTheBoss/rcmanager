@@ -261,8 +261,6 @@ class Backup:
         return toblob(self.path_to_rc_file)
 
 
-# TODO: Write update method
-# TODO: Write skel method
 @click.group(invoke_without_command=True)
 @click.option("-v", "--version", is_flag=True, help="Print version info.")
 @click.option("--license", is_flag=True, help="Print licensing info.")
@@ -1531,12 +1529,6 @@ def list(table, index, name, shell, showrc):
     else:
         print("Invalid option specified, please try again.")
         exit()
-
-
-@rcmanager.command()
-def skel():
-    """Manage skeleton rc files."""
-    checkdatabase()
 
 
 @rcmanager.command()
