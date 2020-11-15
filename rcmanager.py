@@ -261,10 +261,8 @@ class Backup:
         return toblob(self.path_to_rc_file)
 
 
-# TODO: Write remove method
 # TODO: Write update method
 # TODO: Write skel method
-# TODO: Write swap method
 @click.group(invoke_without_command=True)
 @click.option("-v", "--version", is_flag=True, help="Print version info.")
 @click.option("--license", is_flag=True, help="Print licensing info.")
@@ -395,10 +393,66 @@ def upload(name, shell, rcfile, note, yml_file, yes):
                     exit()
 
 
+@click.option("-n", "--name", default=None, help="Name of the rc file you wish to delete.")
+@click.option("-i", "--index", default=None, help="Index of the rc file you wish to delete.")
 @rcmanager.command()
-def remove():
+def remove(name, index):
     """Remove an rc file from the rc file database."""
     checkdatabase()
+    if name is None and index is None:
+        print("Please either use -n, --name or -i, --index "
+              "to specify which rc file you would like to delete "
+              "from the database. Use rcmanager remove --help "
+              "for help.")
+
+    elif name is not None and index is None:
+        conn = sqlite3.connect("{}/.local/rcmanager/data/rcmanager.db".format(home_env_var))
+        cursor = conn.cursor()
+        try:
+            cursor.execute("DELETE FROM rcfile WHERE EXISTS(SELECT * FROM rcfile WHERE name = ?)",
+                           (name,))
+            conn.commit()
+            print("The rc file named {} has been deleted from the rc file database")
+
+        except sqlite3.Error as e:
+            conn.rollback()
+            fout = open("{}/.local/rcmanager/logs/remove.err.log".format(home_env_var), "wt")
+            print(e, file=fout)
+            fout.close()
+            print("An error occurred! Please check log file in \n"
+                  "~/.local/rcmanager/logs")
+            exit()
+
+        finally:
+            conn.close()
+
+    elif name is None and index is not None:
+        conn = sqlite3.connect("{}/.local/rcmanager/data/rcmanager.db".format(home_env_var))
+        cursor = conn.cursor()
+        try:
+            cursor.execute("DELETE FROM rcfile WHERE EXISTS(SELECT * FROM rcfile WHERE id = ?)",
+                           (index,))
+            conn.commit()
+            print("The rc file with index {} has been deleted from the rc file database")
+
+        except sqlite3.Error as e:
+            conn.rollback()
+            fout = open("{}/.local/rcmanager/logs/remove.err.log".format(home_env_var), "wt")
+            print(e, file=fout)
+            fout.close()
+            print("An error occurred! Please check log file in \n"
+                  "~/.local/rcmanager/logs")
+            exit()
+
+        finally:
+            conn.close()
+
+    elif name is not None and index is not None:
+        print("Please only use -n, --name or -i, --index. No need for both.")
+
+    else:
+        print("Invalid option specified. Please use "
+              "rcmanager remove --help for help.")
 
 
 @rcmanager.command()
