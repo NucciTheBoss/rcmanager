@@ -157,6 +157,92 @@ def checkdatabase(env_home):
             conn.close()
 
 
+# checkshell verifies that a shell is installed on the system.
+# If not, the rcmanager and rcskel will exit before doing anything.
+def checkshell(shell):
+    if shell.lower() == "bash":
+        is_installed = command(shell.lower())
+        if is_installed is True:
+            return True
+
+        else:
+            print("Hmm. It seems that bash is not installed on your system.\n\n"
+                  "To install bash on Debian/Ubuntu systems:\n\n"
+                  "$ sudo apt-get install bash\n\n"
+                  "To install bash on CentOS/Fedora/RHEL:\n\n"
+                  "$ sudo dnf install bash")
+            return False
+
+    elif shell.lower() == "csh":
+        is_installed = command(shell.lower())
+        if is_installed is True:
+            return True
+
+        else:
+            print("Hmm. It seems that csh is not installed on your system.\n\n"
+                  "To install csh on Debian/Ubuntu systems:\n\n"
+                  "$ sudo apt-get install csh\n\n"
+                  "To install csh on CentOS/Fedora/RHEL:\n\n"
+                  "$ sudo dnf install tcsh")
+            return False
+
+    elif shell.lower() == "ksh":
+        is_installed = command(shell.lower())
+        if is_installed is True:
+            return True
+
+        else:
+            print("Hmm. It seems that ksh is not installed on your system.\n\n"
+                  "To install ksh on Debian/Ubuntu systems:\n\n"
+                  "$ sudo apt-get install ksh\n\n"
+                  "To install ksh on CentOS/Fedora/RHEL:\n\n"
+                  "$ sudo dnf install ksh")
+            return False
+
+    elif shell.lower() == "tcsh":
+        is_installed = command(shell.lower())
+        if is_installed is True:
+            return True
+
+        else:
+            print("Hmm. It seems that tcsh is not installed on your system.\n\n"
+                  "To install tcsh on Debian/Ubuntu systems:\n\n"
+                  "$ sudo apt-get install tcsh\n\n"
+                  "To install tcsh on CentOS/Fedora/RHEL:\n\n"
+                  "$ sudo dnf install tcsh")
+            return False
+
+    elif shell.lower() == "zsh":
+        is_installed = command(shell.lower())
+        if is_installed is True:
+            return True
+
+        else:
+            print("Hmm. It seems that zsh is not installed on your system.\n\n"
+                  "To install zsh on Debian/Ubuntu systems:\n\n"
+                  "$ sudo apt-get install zsh\n\n"
+                  "To install zsh on CentOS/Fedora/RHEL:\n\n"
+                  "$ sudo dnf install zsh")
+            return False
+
+    elif shell.lower() == "fish":
+        is_installed = command(shell.lower())
+        if is_installed is True:
+            return True
+
+        else:
+            print("Hmm. It seems that fish is not installed on your system.\n\n"
+                  "To install fish on Debian/Ubuntu systems:\n\n"
+                  "$ sudo apt-get install fish\n\n"
+                  "To install fish on CentOS/Fedora/RHEL:\n\n"
+                  "$ sudo dnf install fish")
+            return False
+
+    else:
+        print("Shell passed as argument not recognized.")
+        return False
+
+
 # blobtotext converts binary large objects back into files
 def blobtotext(blob_data, env_home):
     tmp_file = "{}/.local/rcmanager/tmp/tmp_file.txt".format(env_home)
@@ -253,3 +339,22 @@ def underlength(string, max_length):
 
     else:
         return False
+
+
+# Sort of like "command -v <executable_name>"
+def command(executable):
+    # Define function to check is something is a executable
+    def isexe(exe):
+        return os.path.isfile(exe) and os.access(exe, os.X_OK)
+
+    exec_path, exec_name = os.path.split(executable)
+    if exec_path:
+        if isexe(executable):
+            return True
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            exe_file = os.path.join(path, executable)
+            if isexe(exe_file):
+                return True
+
+    return False
