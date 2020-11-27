@@ -6,6 +6,7 @@ from tabulate import tabulate
 from utils import rcerror
 from utils.rcfuncsandclass import RCfile  # Class
 from utils.rcfuncsandclass import checkdatabase  # Function
+from utils.rcfuncsandclass import checkshell  # Function
 from utils.rcfuncsandclass import blobtotext  # Function
 from utils.rcfuncsandclass import rcfileretriever  # Function
 
@@ -63,6 +64,12 @@ def rcmanager(version, license):
 def upload(name, shell, rcfile, note, yml_file, yes):
     """Upload a new rc file to the rc file database."""
     checkdatabase(home_env_var)
+
+    # Check if shell is installed on system
+    is_shell_installed = checkshell(shell)
+    if is_shell_installed is False:
+        exit()
+
     # Begin the upload process
     if yml_file is not None:
         # TODO: Write method to parse YAML file
@@ -345,6 +352,12 @@ def update(name, index, update_name, update_shell, update_content, update_note):
 def reset(shell, name, index, backup):
     """Reset the specified shell's rc file."""
     checkdatabase(home_env_var)
+
+    # Check if shell is installed on system
+    is_shell_installed = checkshell(shell)
+    if is_shell_installed is False:
+        exit()
+
     if shell is None:
         print("Please specify what shell you would like to reset.")
         exit()
@@ -570,6 +583,12 @@ def reset(shell, name, index, backup):
 def restore(shell, backup):
     """Restore a shell's previous rc file."""
     checkdatabase(home_env_var)
+
+    # Check if shell is installed on system
+    is_shell_installed = checkshell(shell)
+    if is_shell_installed is False:
+        exit()
+
     if shell is None:
         print("Please specify which shell you want to restore.")
 
@@ -629,6 +648,12 @@ def restore(shell, backup):
 def list(table, index, name, shell, showrc):
     """List the contents of a table in the rc file database."""
     checkdatabase(home_env_var)
+
+    # Check if shell is installed on system
+    is_shell_installed = checkshell(shell)
+    if is_shell_installed is False:
+        exit()
+
     # Global variables for function
     headers = ["Index", "Name", "Shell", "Note"]
     fmt = "grid"
@@ -1133,6 +1158,13 @@ def list(table, index, name, shell, showrc):
 @click.option("--backup/--no-backup", default=True, help="Backup current rc file. Default is backup")
 def swap(shell, name, index, backup):
     """Swap rc files."""
+    checkdatabase(home_env_var)
+
+    # Check if shell is installed on system
+    is_shell_installed = checkshell(shell)
+    if is_shell_installed is False:
+        exit()
+
     if shell is None:
         print("Please specify the shell whose rc file you would like to swap.")
 
