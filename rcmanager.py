@@ -42,13 +42,6 @@ def rcmanager(version, license):
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.""")
 
-    else:
-        click.echo("rcmanager v0.1  Copyright (C) 2020  Jason C. Nucciarone \n\n"
-                   "This program comes with ABSOLUTELY NO WARRANTY; \n"
-                   "for more details type \"rcmanager --license\". This is free software, \n"
-                   "and you are welcome to redistribute it under certain conditions; \n"
-                   "type \"rcmanager --license\" for more details.")
-
 
 @rcmanager.command()
 @click.option("-n", "--name", default=None, help="The rc file's name.")
@@ -66,9 +59,10 @@ def upload(name, shell, rcfile, note, yml_file, yes):
     checkdatabase(home_env_var)
 
     # Check if shell is installed on system
-    is_shell_installed = checkshell(shell)
-    if is_shell_installed is False:
-        exit()
+    if shell is not None:
+        is_shell_installed = checkshell(shell)
+        if is_shell_installed is False:
+            exit()
 
     # Begin the upload process
     if yml_file is not None:
@@ -354,9 +348,10 @@ def reset(shell, name, index, backup):
     checkdatabase(home_env_var)
 
     # Check if shell is installed on system
-    is_shell_installed = checkshell(shell)
-    if is_shell_installed is False:
-        exit()
+    if shell is not None:
+        is_shell_installed = checkshell(shell)
+        if is_shell_installed is False:
+            exit()
 
     if shell is None:
         print("Please specify what shell you would like to reset.")
@@ -585,9 +580,10 @@ def restore(shell, backup):
     checkdatabase(home_env_var)
 
     # Check if shell is installed on system
-    is_shell_installed = checkshell(shell)
-    if is_shell_installed is False:
-        exit()
+    if shell is not None:
+        is_shell_installed = checkshell(shell)
+        if is_shell_installed is False:
+            exit()
 
     if shell is None:
         print("Please specify which shell you want to restore.")
@@ -650,9 +646,10 @@ def list(table, index, name, shell, showrc):
     checkdatabase(home_env_var)
 
     # Check if shell is installed on system
-    is_shell_installed = checkshell(shell)
-    if is_shell_installed is False:
-        exit()
+    if shell is not None:
+        is_shell_installed = checkshell(shell)
+        if is_shell_installed is False:
+            exit()
 
     # Global variables for function
     headers = ["Index", "Name", "Shell", "Note"]
@@ -1161,9 +1158,10 @@ def swap(shell, name, index, backup):
     checkdatabase(home_env_var)
 
     # Check if shell is installed on system
-    is_shell_installed = checkshell(shell)
-    if is_shell_installed is False:
-        exit()
+    if shell is not None:
+        is_shell_installed = checkshell(shell)
+        if is_shell_installed is False:
+            exit()
 
     if shell is None:
         print("Please specify the shell whose rc file you would like to swap.")
