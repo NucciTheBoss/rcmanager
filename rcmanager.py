@@ -202,6 +202,13 @@ def remove(name, index):
 def update(name, index, update_name, update_shell, update_content, update_note):
     """Update a rc file stored in the rc file database."""
     checkdatabase(home_env_var)
+
+    # Check if shell is installed on system
+    if update_shell is not None:
+        is_shell_installed = checkshell(update_shell)
+        if is_shell_installed is False:
+            exit()
+
     if name is None and index is None:
         print("Please either use -n, --name or -i, --index "
               "to specify which rc file entry you would like to update "

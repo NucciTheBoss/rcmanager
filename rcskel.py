@@ -3,6 +3,8 @@ import os
 import sqlite3
 from tabulate import tabulate
 # Local modules
+from utils.rcfuncsandclass import checkdatabase  # Function
+from utils.rcfuncsandclass import checkshell  # Function
 
 
 # Global variables
@@ -51,7 +53,13 @@ def rcskel(version, license):
 @click.option("-y", "--yes", is_flag=True)
 def upload(name, shell, rcfile, note, yml_file, yes):
     """Upload a new skeleton rc file to the rc file database."""
-    pass
+    checkdatabase(home_env_var)
+
+    # Check if shell is installed on system
+    if shell is not None:
+        is_shell_installed = checkshell(shell)
+        if is_shell_installed is False:
+            exit()
 
 
 @rcskel.command()
@@ -59,7 +67,7 @@ def upload(name, shell, rcfile, note, yml_file, yes):
 @click.option("-i", "--index", default=None, help="Index of the skeleton rc file you wish to delete.")
 def remove(name, index):
     """Remove a skeleton rc file from the rc file database."""
-    pass
+    checkdatabase(home_env_var)
 
 
 @rcskel.command()
@@ -73,7 +81,13 @@ def remove(name, index):
 @click.option("--update_note", default=None, help="Set a new note for specified skeleton rc file.")
 def update(name, index, update_name, update_shell, update_content, update_note):
     """Update a rc file stored in the rc file database."""
-    pass
+    checkdatabase(home_env_var)
+
+    # Check if shell is installed on system
+    if update_shell is not None:
+        is_shell_installed = checkshell(update_shell)
+        if is_shell_installed is False:
+            exit()
 
 
 @rcskel.command()
@@ -87,7 +101,12 @@ def update(name, index, update_name, update_shell, update_content, update_note):
                                              "Warning: Output can potentially get very large")
 def list(name, index, shell, showrc):
     """List the contents of the skel table in the rc file database."""
-    pass
+    checkdatabase(home_env_var)
+
+    if shell is not None:
+        is_shell_installed = checkshell(shell)
+        if is_shell_installed is False:
+            exit()
 
 
 @rcskel.command()
@@ -97,13 +116,13 @@ def list(name, index, shell, showrc):
                                                   "table.")
 def export():
     """Export skeleton rc file to YAML"""
-    pass
+    checkdatabase(home_env_var)
 
 
 @rcskel.command()
 def dump():
     """Dump rc file database to SQL"""
-    pass
+    checkdatabase(home_env_var)
 
 
 if __name__ == '__main__':
