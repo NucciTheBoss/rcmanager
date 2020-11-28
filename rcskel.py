@@ -2,7 +2,6 @@ import click
 import os
 import sqlite3
 from tabulate import tabulate
-
 # Local modules
 
 
@@ -37,6 +36,74 @@ def rcskel(version, license):
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.""")
+
+
+@rcskel.command()
+@click.option("-n", "--name", default=None, help="The skeleton rc file's name.")
+@click.option("-s", "--shell", type=click.Choice(["bash", "csh", "ksh",
+                                                  "tcsh", "zsh", "fish"],
+                                                 case_sensitive=False),
+              default=None,
+              help="The skeleton rc file's corresponding shell.")
+@click.option("-f", "--rcfile", default=None, help="Path to the skeleton rc file.")
+@click.option("--note", default=None, help="A short description of the skeleton rc file.")
+@click.option("--yml_file", default=None, help="Upload a skeleton rc file from a YAML file.")
+@click.option("-y", "--yes", is_flag=True)
+def upload(name, shell, rcfile, note, yml_file, yes):
+    """Upload a new skeleton rc file to the rc file database."""
+    pass
+
+
+@rcskel.command()
+@click.option("-n", "--name", default=None, help="Name of the skeleton rc file you wish to delete.")
+@click.option("-i", "--index", default=None, help="Index of the skeleton rc file you wish to delete.")
+def remove(name, index):
+    """Remove a skeleton rc file from the rc file database."""
+    pass
+
+
+@rcskel.command()
+@click.option("-n", "--name", default=None, help="Name of the skeleton rc file whose content you wish to update.")
+@click.option("-i", "--index", default=None, help="Index of the skeleton rc file whose content you wish to update.")
+@click.option("--update_name", default=None, help="Set a new name for the specified skeleton rc file.")
+@click.option("--update_shell", default=None, help="Set a new shell for the specified skeleton rc file.")
+@click.option("--update_content", default=None, help="Set new rc file content for specified skeleton rc file.\n "
+                                                     "Specify the full path to file containing the new content "
+                                                     "for the skeleton rc file.")
+@click.option("--update_note", default=None, help="Set a new note for specified skeleton rc file.")
+def update(name, index, update_name, update_shell, update_content, update_note):
+    """Update a rc file stored in the rc file database."""
+    pass
+
+
+@rcskel.command()
+@click.option("-n", "--name", default=None, help="List a skeleton rc file based on its name in the skel table.")
+@click.option("-i", "--index", default=None, help="List a skeleton rc file based on its index in the skel table.")
+@click.option("-s", "--shell", type=click.Choice(["bash", "csh", "ksh",
+                                                  "tcsh", "zsh", "fish"],
+                                                 case_sensitive=False),
+              default=None, help="List a skeleton rc file based on its shell")
+@click.option("--showrc", is_flag=True, help="Show contents of the skeleton rc file.\n "
+                                             "Warning: Output can potentially get very large")
+def list(name, index, shell, showrc):
+    """List the contents of the skel table in the rc file database."""
+    pass
+
+
+@rcskel.command()
+@click.option("-n", "--name", default=None, help="Export a skeleton rc file to YAML based on its name in the skel "
+                                                 "table.")
+@click.option("-i", "--index", default=None, help="Export a skeleton rc file to YAML based on its index in the skel "
+                                                  "table.")
+def export():
+    """Export skeleton rc file to YAML"""
+    pass
+
+
+@rcskel.command()
+def dump():
+    """Dump rc file database to SQL"""
+    pass
 
 
 if __name__ == '__main__':
