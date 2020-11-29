@@ -5,7 +5,7 @@ from tabulate import tabulate
 # Local modules
 from utils import rcerror
 from utils.rcfuncsandclass import RCfile  # Class
-from utils.rcfuncsandclass import checkdatabase  # Function
+from utils.rcdatabase import checkdatabase  # Function
 from utils.rcfuncsandclass import checkshell  # Function
 from utils.rcfuncsandclass import blobtotext  # Function
 from utils.rcfuncsandclass import rcfileretriever  # Function

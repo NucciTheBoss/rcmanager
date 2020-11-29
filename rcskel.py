@@ -3,7 +3,7 @@ import os
 import sqlite3
 from tabulate import tabulate
 # Local modules
-from utils.rcfuncsandclass import checkdatabase  # Function
+from utils.rcdatabase import checkdatabase  # Function
 from utils.rcfuncsandclass import checkshell  # Function
 
 
