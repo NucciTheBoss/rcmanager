@@ -5,26 +5,37 @@ channels:
 dependencies:
   - _libgcc_mutex=0.1=conda_forge
   - _openmp_mutex=4.5=1_gnu
-  - ca-certificates=2020.6.20=hecda079_0
-  - certifi=2020.6.20=py38h32f6830_0
+  - brotlipy=0.7.0=py38h8df0ef7_1001
+  - ca-certificates=2020.11.8=ha878542_0
+  - certifi=2020.11.8=py38h578d9bd_0
+  - cffi=1.14.4=py38ha312104_0
+  - chardet=3.0.4=py38h924ce5b_1008
   - click=7.1.2=pyh9f0ad1d_0
+  - cryptography=3.2.1=py38h7699a38_0
+  - idna=2.10=pyh9f0ad1d_0
   - ld_impl_linux-64=2.34=hc38a660_9
   - libffi=3.2.1=he1b5a44_1007
   - libgcc-ng=9.3.0=h24d8f2e_16
   - libgomp=9.3.0=h24d8f2e_16
   - libstdcxx-ng=9.3.0=hdf63c60_16
   - ncurses=6.2=he1b5a44_1
-  - openssl=1.1.1g=h516909a_1
+  - openssl=1.1.1h=h516909a_0
   - pip=20.2.2=py_0
   - pyaml=20.4.0=pyh9f0ad1d_0
+  - pycparser=2.20=pyh9f0ad1d_2
+  - pyopenssl=20.0.0=pyhd8ed1ab_0
+  - pysocks=1.7.1=py38h924ce5b_2
   - python=3.8.5=h1103e12_7_cpython
   - python_abi=3.8=1_cp38
   - pyyaml=5.3.1=py38h1e0a361_0
   - readline=8.0=he28a2e2_2
+  - requests=2.25.0=pyhd3deb0d_0
   - setuptools=49.6.0=py38h32f6830_0
+  - six=1.15.0=pyh9f0ad1d_0
   - sqlite=3.33.0=h4cf870e_0
   - tabulate=0.8.7=pyh9f0ad1d_0
   - tk=8.6.10=hed695b0_0
+  - urllib3=1.25.11=py_0
   - wheel=0.35.1=pyh9f0ad1d_0
   - xz=5.2.5=h516909a_1
   - yaml=0.2.5=h516909a_0
