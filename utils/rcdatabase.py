@@ -1,7 +1,9 @@
 import os
+import sqlite3
 import requests
 # Local modules
 from .rcerror import rcerrormsg
+from .command import command
 
 
 # Check for the rcmanager database. If not available then create
@@ -11,10 +13,20 @@ def checkdatabase(env_home):
         return
 
     else:
-        os.system("mkdir -p {}/.local/rcmanager/data".format(env_home))
-        os.system("mkdir -p {}/.local/rcmanager/logs".format(env_home))
-        os.system("mkdir -p {}/.local/rcmanager/tmp".format(env_home))
-        os.system("touch {}/.local/rcmanager/data/rcmanager.db".format(env_home))  # Create db file
+        # Create necessary directories
+        rc_manager_dirs = ["{}/.local/rcmanager/data".format(env_home),
+                           "{}/.local/rcmanager/logs".format(env_home),
+                           "{}/.local/rcmanager/tmp".format(env_home)]
+
+        for dirs in rc_manager_dirs:
+            try:
+                os.makedirs(dirs)
+
+            except FileExistsError:
+                pass
+
+        db = os.open("{}/.local/rcmanager/data/rcmanager.db".format(env_home), os.O_RDWR | os.O_CREAT)  # Create db file
+        os.close(db)
 
         # Populate the database with default tables
         conn = sqlite3.connect("{}/.local/rcmanager/data/rcmanager.db".format(env_home))
@@ -37,39 +49,62 @@ def checkdatabase(env_home):
                            '                                shell VARCHAR(10),\n'
                            '                                content BLOB)')
 
-            # Once tables are created populate the skel table
-            # Pull off of github for the time being
-            try:
-                os.system("curl -s -o /tmp/tmp_bashrc "
-                          "https://raw.githubusercontent.com/NucciTheBoss/rcmanager/master/share/skel/.bashrc")
-                os.system("curl -s -o /tmp/tmp_cshrc "
-                          "https://raw.githubusercontent.com/NucciTheBoss/rcmanager/master/share/skel/.cshrc")
-                os.system("curl -s -o /tmp/tmp_kshrc "
-                          "https://raw.githubusercontent.com/NucciTheBoss/rcmanager/master/share/skel/.kshrc")
-                os.system("curl -s -o /tmp/tmp_tcshrc "
-                          "https://raw.githubusercontent.com/NucciTheBoss/rcmanager/master/share/skel/.tcshrc")
-                os.system("curl -s -o /tmp/tmp_zshrc "
-                          "https://raw.githubusercontent.com/NucciTheBoss/rcmanager/master/share/skel/.zshrc")
-                os.system("curl -s -o /tmp/tmp_fish "
-                          "https://raw.githubusercontent.com/NucciTheBoss/rcmanager/master/share/skel/config.fish")
+            # Initialize skel files list
+            skel_files = list()
 
-            except OSError as e:
+            # Once tables are created populate the skel table
+            # Try to pull most recent version off of GitHub
+            try:
+                # Where the skel files are currently hosted
+                urls = ["https://raw.githubusercontent.com/NucciTheBoss/rcmanager/master/share/skel/.bashrc",
+                        "https://raw.githubusercontent.com/NucciTheBoss/rcmanager/master/share/skel/.cshrc",
+                        "https://raw.githubusercontent.com/NucciTheBoss/rcmanager/master/share/skel/.kshrc",
+                        "https://raw.githubusercontent.com/NucciTheBoss/rcmanager/master/share/skel/.tcshrc",
+                        "https://raw.githubusercontent.com/NucciTheBoss/rcmanager/master/share/skel/.zshrc",
+                        "https://raw.githubusercontent.com/NucciTheBoss/rcmanager/master/share/skel/config.fish"]
+
+                if command("bash") is True:
+                    path_name = "{}/.local/rcmanager/tmp/tmp_bashrc".format(env_home)
+                    urlretreiver(urls[0], path_name)
+                    skel_files.append(("bash", path_name))
+
+                if command("csh") is True:
+                    path_name = "{}/.local/rcmanager/tmp/tmp_cshrc".format(env_home)
+                    urlretreiver(urls[1], path_name)
+                    skel_files.append(("csh", path_name))
+
+                if command("ksh") is True:
+                    path_name = "{}/.local/rcmanager/tmp/tmp_kshrc".format(env_home)
+                    urlretreiver(urls[2], path_name)
+                    skel_files.append(("ksh", path_name))
+
+                if command("tcsh") is True:
+                    path_name = "{}/.local/rcmanager/tmp/tmp_tcshrc".format(env_home)
+                    urlretreiver(urls[3], path_name)
+                    skel_files.append(("tcsh", path_name))
+
+                if command("zsh") is True:
+                    path_name = "{}/.local/rcmanager/tmp/tmp_zshrc".format(env_home)
+                    urlretreiver(urls[4], path_name)
+                    skel_files.append(("zsh", path_name))
+
+                if command("fish") is True:
+                    path_name = "{}/.local/rcmanager/tmp/tmp_fish".format(env_home)
+                    urlretreiver(urls[5], path_name)
+                    skel_files.append(("fish", path_name))
+
+            except IOError as e:
                 rcerrormsg(env_home, "initialization", e)
                 exit()
 
-            # Insert skel files into skel table
-            # Create list with name and location of skel rc file
-            skel_files = [("/tmp/tmp_bashrc", "bash"), ("/tmp/tmp_cshrc", "csh"), ("/tmp/tmp_kshrc", "ksh"),
-                          ("/tmp/tmp_tcshrc", "tcsh"), ("/tmp/tmp_zshrc", "zsh"), ("/tmp/tmp_fish", "fish")]
-
             # Loop through list and add to rc file database
             for item in skel_files:
-                fin = open(item[0], "rb")
+                fin = open(item[1], "rb")
                 tmp_blob = fin.read()
                 tmp_name = "{}_default".format(item[1])
-                tmp_note = "The default rc file for the {} shell".format(item[1])
+                tmp_note = "The default rc file for the {} shell".format(item[0])
                 cursor.execute('''INSERT INTO skel(name, shell, content, note)
-                                    VALUES(?,?,?,?)''', (tmp_name, item[1], tmp_blob, tmp_note))
+                                    VALUES(?,?,?,?)''', (tmp_name, item[0], tmp_blob, tmp_note))
 
             conn.commit()
 
@@ -80,3 +115,10 @@ def checkdatabase(env_home):
 
         finally:
             conn.close()
+
+
+# Local functions
+def urlretreiver(url, output_path):
+    r = requests.get(url, allow_redirects=True)
+    with open(output_path, "wb") as fout:
+        fout.write(r.content)
